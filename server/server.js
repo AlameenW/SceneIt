@@ -30,11 +30,12 @@ app.use(
     credentials: true,
   })
 );
+
 app.use(express.json());
 
 app.use(session({
     secret: 'codepath',
-    resave: 'false',
+    resave: false,
     saveUnitialized: true
 }));
 
@@ -53,7 +54,6 @@ passport.deserializeUser((user, done) => {
 
 // routes
 app.use('/auth', router);
-app.use('/api/user', userRouter);
 
 // Basic health check
 app.get("/", (req, res) => {
@@ -73,8 +73,7 @@ app.get("/api/movies", getAllMovies);
 app.get("/api/movies/:id", getMovieById);
 
 // User routes
-app.get("/api/users", UserController.getAllUsers);
-app.get("/api/user/:username", UserController.getUserByUsername)
+app.use("/api", userRouter);
 
 app.listen(PORT, () => {
     console.log(`🚀 Server listening on http://localhost:${PORT}`);

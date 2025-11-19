@@ -45,7 +45,7 @@ function App() {
             <Routes>
                 <Route path="/" element={<MoviesPage />} />
                 <Route path="/movies" element={<MoviesPage />} />
-                <Route path="/movie/:id" element={<MovieDetailPage />} />
+                <Route path="/movie/:id" element={<MovieDetailPage user = {user}/>} />
                 <Route path="/:username" element={user ? <UserPage user={user}/>: <h1>Please log in</h1>} />
             </Routes>
             </main>

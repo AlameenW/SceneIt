@@ -4,6 +4,7 @@ import { useParams} from "react-router-dom";
 function UserPage () {
     const { username } = useParams();
     const [user, setUser] = useState(null);
+    const [reviews, setReviews] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
@@ -17,8 +18,8 @@ function UserPage () {
                 const response = await fetch(`http://localhost:3001/api/user/${username}`);
                 const data = await response.json();
         
-                if (data) {
-                    setUser(data);
+                if (data.success) {
+                    setUser(data.data);
                 } else {
                     setError("User not found");
                 }
@@ -29,9 +30,28 @@ function UserPage () {
                 setLoading(false);
             }
         };
+        
+        const fetchReviews = async () => {
+            try {
+                const response = await fetch(`http://localhost:3001/api/${username}/reviews`);
+                const data = await response.json();
+
+                if (data.success) {
+                    setReviews(data.data)
+                } else {
+                    setError("Reviews not found");
+                    setReviews([]);
+                }
+            } catch (error)
+            {
+                console.error("Error fetching reviews:", error);
+                setReviews([]);
+            }
+        }
     
         if (username) {
             fetchUser();
+            fetchReviews();
         }
     }, [username]);
 
@@ -59,13 +79,30 @@ function UserPage () {
                     {/* User Information */}
                     <div className="p-4">
                         <h2 className="text-2xl font-semibold">{user.username}</h2>
-                        <p>Number of Movies Reviewed: {/* Add logic later */}</p>
+                        <p>Number of Movies Reviewed: {reviews ? reviews.length : 0}</p>
                         <p>Favorite Movie: {/* Add logic later */}</p>
+                        <p>Highest Rated Movie: </p>
                     </div>
                 </div>
             )}
+            {/* User's Reviewed Movies */}
+            <div>
+                <ul>
+                    {Array.isArray(reviews) && reviews.length > 0 ? (
+                        reviews.map((review) => (
+                        <li key={review.id}>
+                            <p>Movie ID: {review.movie_id}</p>
+                            <p>Rating: {review.rating}/10</p>
+                            <p>Review: {review.review_text || "No text"}</p>
+                        </li>
+                        ))
+                    ) : (
+                        <p>No reviews yet.</p>
+                    )}
+                </ul>
+            </div>
         </div>
     )
-}
+};
 
 export default UserPage;

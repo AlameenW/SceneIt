@@ -2,9 +2,11 @@ import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import LoadingSpinner from "../components/LoadingSpinner";
 
-function MovieDetailPage() {
+function MovieDetailPage( {user} ) {
   const { id } = useParams();
+  const username = user?.username;
   const [movie, setMovie] = useState(null);
+  const [rating, setRating] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -43,6 +45,28 @@ function MovieDetailPage() {
     ];
     return colors[index % colors.length];
   };
+
+    // Handle user submit rating
+    const handleSubmitRating = async () => {
+        if (!rating) {
+            console.log("No rating selected")
+            return;
+        }
+        try {
+            const response = await fetch(
+                `http://localhost:3001/api/${username}/review/${movie.id}`,
+                {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    credentials: 'include',
+                    body: JSON.stringify({ rating, review_text: ""}),
+                }
+            );
+            const data = await response.json();
+        } catch (error) {
+            console.error(error);
+        }
+    };
 
   // Fetch movie details
   useEffect(() => {
@@ -290,10 +314,23 @@ function MovieDetailPage() {
               Your Review
             </h3>
             <div className="text-center text-gray-500">
-              <p className="mb-4">/10</p>
-              <button className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium transition-colors">
-                Rate This Movie
-              </button>
+                <input
+                    type="number"
+                    min="0"
+                    max="10"
+                    value={rating}
+                    onChange={(e) => setRating(e.target.value)}
+                    placeholder="0"
+                    className="border border-gray-300 rounded px-2 py-1 w-16 mr-2"
+                    style={{appearance:'none',
+                        MozAppearance: 'textfield'
+                    }}
+                    />        
+                <span>/10</span>     
+                <button className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium transition-colors"
+                        onClick={handleSubmitRating}>
+                    Rate This Movie
+                </button>
             </div>
           </div>
         </div>

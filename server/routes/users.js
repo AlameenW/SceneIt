@@ -3,7 +3,13 @@ import UserController from '../controllers/userController.js'
 
 const router = express.Router();
 
-router.post('/create/:user_id', UserController.createUserReview)
-router.get('/movies/:user_id', UserController.getUserReviews)
+// GET requests
+router.get("/users", UserController.getAllUsers);
+router.get("/user/:username", UserController.getUserByUsername)
+
+router.get('/:username/reviews', UserController.getUserReviews) // NOT YET IMPLEMENTED
+
+// POST requests
+router.post('/:username/review/:movie_id', UserController.createUserReview)
 
 export default router;

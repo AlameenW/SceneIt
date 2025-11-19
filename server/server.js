@@ -1,6 +1,11 @@
 import express from "express";
 import cors from "cors";
 import "./config/dotenv.js";
+import passport from 'passport';
+import session from 'express-session';
+import { GitHub } from './config/auth.js';
+import router from './routes/auth.js';
+import userRouter from './routes/users.js';
 
 // Import controllers
 import { getAllMovies, getMovieById } from "./controllers/movieController.js";
@@ -19,11 +24,35 @@ const PORT = process.env.PORT || 3001;
 // Middleware
 app.use(
   cors({
-    origin: ["http://localhost:5173", "http://localhost:3000"], // Allow Vite dev server
+    origin: ["http://localhost:5173", "http://localhost:3001"], // Allow Vite dev server
+    methods: 'GET,POST,PUT,DELETE,PATCH',
     credentials: true,
   })
 );
 app.use(express.json());
+
+app.use(session({
+    secret: 'codepath',
+    resave: 'false',
+    saveUnitialized: true
+}));
+
+app.use(passport.initialize());
+app.use(passport.session());
+
+passport.use(GitHub);
+
+passport.serializeUser((user, done) => {
+    done(null, user);
+});
+
+passport.deserializeUser((user, done) => {
+    done(null, user);
+})
+
+// routes
+app.use('/auth', router);
+app.use('/api', userRouter);
 
 // Basic health check
 app.get("/", (req, res) => {

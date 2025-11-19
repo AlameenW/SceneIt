@@ -2,7 +2,7 @@
 
 CodePath WEB103 Final Project
 
-Designed and developed by: Alameen Adeku, Axin Li, Helen Tran
+Designed and developed by: Alameen Adeku, Axin Li
 
 🔗 Link to deployed app:
 
@@ -30,20 +30,20 @@ Backend: NodeJS, Express, Postgres, Render.
 
 These are the core features available to all users for browsing and discovering movies on the platform.
 
-- [ ] Search Functionality: A site-wide search bar allows users to quickly find any movie in the database by its title.
+- [x] Search Functionality: A site-wide search bar allows users to quickly find any movie in the database by its title.
 
   - _gif goes here_
 
 - Robust Filtering & Sorting: On the main "Browse" page, users can refine their search based by:
 
-  - [ ] Filter by Genre: Narrow the list to specific genres (e.g., "Horror," "Sci-Fi," "Comedy").
+  - [x] Filter by Genre: Narrow the list to specific genres (e.g., "Horror," "Sci-Fi," "Comedy").
     - _gif goes here_
-  - [ ] Filter by Release Year: Focus on films from a specific decade or year.
+  - [x] Filter by Release Year: Focus on films from a specific decade or year.
     - _gif goes here_
-  - [ ] Sort by: Organize the entire catalog by "Highest Rated," "Most Popular" (based on how many users have it on their watchlist), or "Newest."
+  - [x] Sort by: Organize the entire catalog by "Highest Rated," "Most Popular" (based on how many users have it on their watchlist), or "Newest."
     - _gif goes here_
 
-- [ ] Dynamic Movie Detail Pages: Each movie has its own dedicated, dynamically-routed page that aggregates all user-generated data.
+- [x] Dynamic Movie Detail Pages: Each movie has its own dedicated, dynamically-routed page that aggregates all user-generated data.
 
   - _gif goes here_
 

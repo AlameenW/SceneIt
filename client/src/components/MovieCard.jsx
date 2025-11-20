@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 
-function MovieCard({ movie }) {
+function MovieCard({ movie, rating }) {
   // Build TMDB image URL
   const buildImageURL = (path, size = "w500") => {
     if (!path) return "/placeholder-movie.svg";
@@ -83,6 +83,14 @@ function MovieCard({ movie }) {
             <span className="font-medium">Rating</span>
             <span>{formatRating(movie.external_avg_rating)}</span>
           </div>
+
+        {/* Your rating */}
+        {rating && (
+            <div className="flex justify-between items-center text-sm text-gray-600">
+            <span className="font-medium">Your Rating</span>
+            <span>{formatRating(rating)}</span>
+        </div>
+        )}
 
           {movie.release_date && (
             <div className="flex justify-between items-center text-sm text-gray-600 mt-1">

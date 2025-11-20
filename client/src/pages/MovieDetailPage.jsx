@@ -68,6 +68,24 @@ function MovieDetailPage( {user} ) {
         }
     };
 
+    // Handle user add movie to watchlist
+    const handleAddWatchlist = async () => {
+        try {
+            const response = await fetch(
+                `http://localhost:3001/api/${username}/watchlist/${movie.id}`,
+                {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    credentials: 'include',
+                    body: JSON.stringify({ status:"Not watched", watchlist_priority: 1}),
+                }
+            );
+            const data = await response.json();
+        } catch (error){
+            console.error(error);
+        }
+    };
+
   // Fetch movie details
   useEffect(() => {
     const fetchMovie = async () => {
@@ -227,7 +245,8 @@ function MovieDetailPage( {user} ) {
                 )}
 
                 {/* Add to Watchlist Button */}
-                <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors mb-6">
+                <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors mb-6"
+                        onClick={handleAddWatchlist}>
                   Add to Watchlist
                 </button>
               </div>

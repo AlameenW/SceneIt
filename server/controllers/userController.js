@@ -100,6 +100,82 @@ const UserController = {
             console.log('🚫 unable to GET all user reviews  - Error:', error.message)
         }
     },
+
+    createUserWatchlist: async(req, res) => {
+        try {
+            const username = req.params.username;
+            const movie_id = req.params.movie_id;
+            const { status, watchlist_priority } = req.body;
+
+            const results = await pool.query(`INSERT INTO user_movie_shelf 
+                (user_id, movie_id, status, watchlist_priority)
+                VALUES(
+                    (SELECT githubid as id FROM users WHERE username=$1),
+                    $2,
+                    $3,
+                    $4)
+                RETURNING *`, [username, movie_id, status, watchlist_priority] );
+
+            if (results.rows.length === 0) {
+                return res.status(404).json({
+                    success: false,
+                    error: "User not found",
+                });
+            }
+            res.json({
+                success: true,
+                data: results.rows[0],
+            });
+        }
+        catch (error) {
+            res.status(409).json( { error: error.message })
+            console.log('🚫 unable to POST user watchlist  - Error:', error.message)
+        }
+    },
+
+    getUserWatchlist: async(req, res) => {
+        try {
+            const { username } = req.params;
+            const results = await pool.query(
+                `SELECT * FROM user_movie_shelf
+                WHERE user_id = 
+                (SELECT githubid FROM users WHERE username = $1);`, [username]);
+
+            if (results.rows.length === 0) {
+                return res.status(404).json({
+                    success: false,
+                    error: "User not found",
+                });
+            }
+            res.json({
+                success: true,
+                data: results.rows,
+            });
+        } catch (error) {
+            res.status(409).json( { error: error.message })
+            console.log('🚫 unable to GET user watchlist  - Error:', error.message)
+        }
+    },
+
+    getAllWatchlist: async(req, res) => {
+        try {
+            const results = await pool.query(`
+                SELECT * FROM user_movie_shelf`);
+            if (results.rows.length === 0) {
+                return res.status(404).json({
+                    success: false,
+                    error: "Watchlists not found",
+                });
+            }
+            res.json({
+                success: true,
+                data: results.rows,
+            });
+        } catch (error) {
+            res.status(409).json( { error: error.message })
+            console.log('🚫 unable to GET all watchlists  - Error:', error.message)
+        }
+    },
 }
 
 export default UserController;

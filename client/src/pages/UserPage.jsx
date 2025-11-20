@@ -37,9 +37,8 @@ function UserPage () {
                 const data = await response.json();
 
                 if (data.success) {
-                    setReviews(data.data)
+                    setReviews(Array.isArray(data.data) ? data.data : []);
                 } else {
-                    setError("Reviews not found");
                     setReviews([]);
                 }
             } catch (error)
@@ -87,6 +86,7 @@ function UserPage () {
             )}
             {/* User's Reviewed Movies */}
             <div>
+                <h1>Reviews:</h1>
                 <ul>
                     {Array.isArray(reviews) && reviews.length > 0 ? (
                         reviews.map((review) => (

@@ -7,8 +7,22 @@ function UserPage () {
     const [user, setUser] = useState(null);
     const [rawReviews, setRawReviews] = useState([]);
     const [reviews, setReviews] = useState([]);
+    const [rawWatchlist, setRawWatchlist] = useState([]);
+    const [watchlist, setWatchlist] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+
+    // Fetch movie by Id
+    const fetchMovie = async (movieId) => {
+        try {
+            const response = await fetch(`http://localhost:3001/api/movies/${movieId}`);
+            const data = await response.json();
+            return data.success ? data.data : null;
+        } catch (err) {
+            console.error("Error fetching movie:", err);
+            return null;
+        }
+    };
 
     // Fetch user information
     useEffect(() => {
@@ -32,7 +46,10 @@ function UserPage () {
                 setLoading(false);
             }
         };
-        
+        if (username) fetchUser();
+    }, [username]);
+
+    useEffect(() => {
         const fetchReviews = async () => {
             try {
                 const response = await fetch(`http://localhost:3001/api/${username}/reviews`);
@@ -49,11 +66,7 @@ function UserPage () {
                 setRawReviews([]);
             }
         };
-
-        if (username) {
-            fetchUser();
-            fetchReviews();
-        }
+        if (username) fetchReviews();
     }, [username]);
 
     // Fetch movie data for each review
@@ -63,18 +76,7 @@ function UserPage () {
             return;
         }
 
-    const fetchMovie = async (movieId) => {
-        try {
-            const response = await fetch(`http://localhost:3001/api/movies/${movieId}`);
-            const data = await response.json();
-            return data.success ? data.data : null;
-        } catch (err) {
-            console.error("Error fetching movie:", err);
-            return null;
-        }
-    };
-
-    const loadMovies = async () => {
+        const loadMovies = async () => {
             const movies = await Promise.all(
                 rawReviews.map((r) => fetchMovie(r.movie_id))
             );
@@ -85,9 +87,56 @@ function UserPage () {
             }));
             setReviews(enriched);
         };
-
-    loadMovies();
+        loadMovies();
     }, [rawReviews]);
+
+    // Fetch user watchlist
+    useEffect(() => {
+        const fetchWatchlist = async () => {
+            try {
+                const response = await fetch(`http://localhost:3001/api/${username}/watchlist`);
+                const data = await response.json();
+
+                if (data.success) {
+                    setRawWatchlist(Array.isArray(data.data) ? data.data : []);
+                } else {
+                    setRawWatchlist([]);
+                }
+            } catch (error) {
+                console.error("Error fetching watchlist:", error);
+                setRawWatchlist([]);
+            }
+        };
+        if (username) {
+            fetchWatchlist();
+        }
+    }, [username]);
+
+    // Enrich watchlist with movie data
+    useEffect(() => {
+        if (!rawWatchlist.length) return;
+
+        const loadMovies = async () => {
+            const movies = await Promise.all(
+                rawWatchlist.map((item) => fetchMovie(item.movie_id))
+            );
+
+            const enriched = rawWatchlist.map((item, i) => ({
+                ...item,
+                movie: movies[i],
+            }));
+
+            setWatchlist(enriched);
+        };
+
+        loadMovies();
+    }, [rawWatchlist]);
+
+    const highestRatedMovie = reviews.length > 0
+        ? reviews.reduce((prev, current) => {
+            return (current.rating > prev.rating) ? current : prev;
+        }, reviews[0])
+        : null;
 
 
     if (loading) return <p className="p-4">Loading...</p>;
@@ -116,24 +165,22 @@ function UserPage () {
                         <h2 className="text-2xl font-semibold">{user.username}</h2>
                         <p>Number of Movies Reviewed: {reviews ? reviews.length : 0}</p>
                         <p>Favorite Movie: {/* Add logic later */}</p>
-                        <p>Highest Rated Movie: </p>
+                        <p>
+                            Highest Rated Movie: {highestRatedMovie ? highestRatedMovie.movie.title : "N/A"} ({highestRatedMovie ? highestRatedMovie.rating : "-"}/10)
+                        </p>
                     </div>
                 </div>
             )}
+
             {/* User's Reviewed Movies */}
             <div className="p-4">
                 <h1 className="text-2xl font-semibold text-gray-800">Reviews:</h1>
-                <ul className="flex flex-row ">
+                <ul className="flex flex-row">
                     {Array.isArray(reviews) && reviews.length > 0 ? (
                         reviews.map((review) => (
                         <li key={review.id} className="w-80">
                             {review.movie ? (
-                                <>
-                                    <MovieCard movie={review.movie} rating={review.rating} />
-                                    <p className="mt-2 text-gray-700 font-medium">
-                                        Your rating: {review.rating}
-                                    </p>
-                                </>
+                                <MovieCard movie={review.movie} rating={review.rating} />
                             ) : (
                                 <p>Loading movie...</p>
                             )}
@@ -141,6 +188,31 @@ function UserPage () {
                         ))
                     ) : (
                         <p>No reviews yet.</p>
+                    )}
+                </ul>
+            </div>
+
+            {/* User's Watchlisted Movies */}
+            <div className="p-4">
+                <h1 className="text-2xl font-semibold text-gray-800">Watchlist:</h1>
+                <ul className="flex flex-row">
+                    {Array.isArray(watchlist) && watchlist.length > 0 ? (
+                        watchlist.map((item) => (
+                            <li key={item.id} className="w-80">
+                                {item.movie ? (
+                                    <>
+                                        <MovieCard movie={item.movie} />
+                                        <p className="mt-2 text-gray-700 font-medium">
+                                            Status: {item.status}
+                                        </p>
+                                    </>
+                                ) : (
+                                    <p>Loading movie...</p>
+                                )}
+                            </li>
+                        ))
+                    ) : (
+                        <p>No movies in watchlist yet.</p>
                     )}
                 </ul>
             </div>

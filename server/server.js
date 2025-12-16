@@ -14,8 +14,7 @@ import {
   getMoviesByGenre,
 } from "./controllers/genreController.js";
 import {
-  seedDatabaseController,
-  getDatabaseStats,
+  seedDatabaseController
 } from "./controllers/adminController.js";
 import UserController from "./controllers/userController.js";
 
@@ -62,7 +61,6 @@ app.get("/", (req, res) => {
 
 // Admin routes
 app.get("/seed-database", seedDatabaseController);
-app.get("/api/stats", getDatabaseStats);
 
 // Genre routes
 app.get("/api/genres", getAllGenres);

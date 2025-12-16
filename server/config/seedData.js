@@ -26,7 +26,6 @@ const seedGenres = async () => {
     const data = await response.json();
 
     console.log(`Found ${data.genres.length} genres from TMDB`);
-
     for (const genre of data.genres) {
       await pool.query(
         "INSERT INTO Genres (id, name) VALUES ($1, $2) ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name",

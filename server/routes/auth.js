@@ -35,11 +35,11 @@ router.get(
 )
 
 router.get(
-'/github/callback',
-passport.authenticate('github', {
-    successRedirect: '/',
-    failureRedirect:'/destinations',
-})
-)
+  "/github/callback",
+  passport.authenticate("github", {
+    successRedirect: "http://localhost:5173/",
+    failureRedirect: "http://localhost:5173/",
+  })
+);
 
 export default router;

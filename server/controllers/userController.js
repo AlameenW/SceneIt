@@ -1,3 +1,4 @@
+import { data } from "react-router-dom";
 import { pool } from "../config/database.js";
 
 const UserController = {
@@ -49,35 +50,58 @@ const UserController = {
     },
 
     createUserReview: async (req, res) => {
-        try {
-            const username = req.params.username 
-            const movie_id = parseInt(req.params.movie_id)
-            const { rating, review_text } = req.body
+        try{
+            const username = req.params.username;
+            const movie_id = parseInt(req.params.movie_id);
+            const {rating, review_text}   = req.body;
 
-            const results = await pool.query(`
-                INSERT INTO user_reviews (user_id, movie_id, rating, review_text, username)
-                VALUES (
-                    (SELECT githubid FROM users WHERE username=$1),
-                    $2,
-                    $3,
-                    $4,
-                    $5)
-                RETURNING *`, [username, movie_id, rating, review_text, username]
+            // Check if user exists.
+            const userResult = await pool.query(
+                `SELECT id FROM users WHERE username = $1`, [username]
+            );
+
+            if (userResult.rows.length === 0) {
+              return res.status(404).json({
+                success: false,
+                error: 'User not found',
+              })
+            }
+
+            const user_id = userResult.rows[0].id;
+            
+            const existingReview = await pool.query(
+                `SELECT id FROM user_reviews WHERE user_id=$1 AND movie_id=$2`,
+                [user_id, movie_id]
             )
-            if (results.rows.length === 0) {
-                return res.status(404).json({
-                    success: false,
-                    error: "User not found",
-                });
+
+            let results;
+            if(existingReview.rows.length > 0){
+                results = await pool.query(`
+                    UPDATE user_reviews
+                    SET rating = $3, review_text = $4, created_at = CURRENT_TIMESTAMP
+                    WHERE user_id = $1 AND movie_id = $2
+                    RETURNING *
+                `, [user_id, movie_id, rating, review_text]
+            );
+            }
+            else{
+                results = await pool.query(`
+                        INSERT INTO user_reviews (user_id, movie_id, rating, review_text)
+                        VALUES ($1, $2, $3, $4)
+                        RETURNING *
+                    `, [user_id, movie_id, rating, review_text]);
             }
             res.json({
                 success: true,
                 data: results.rows[0],
+                message: existingReview.rows.length > 0 ? "Review updated" : "Review created"
             });
-            console.log('🆕 added movie reivew')
-        } catch (error) {
-            res.status(409).json( { error: error.message } )
-            console.log('🚫 unable to POST user review - Error:', error.message)
+        }
+        catch(e){
+            res.status(500).json({
+                success: false,
+                error: e.message
+            })
         }
     },
 

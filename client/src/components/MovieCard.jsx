@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 
-function MovieCard({ movie, rating, status: initialStatus, onStatusChange }) {
+function MovieCard({ movie }) {
   // Build TMDB image URL
   const buildImageURL = (path, size = "w500") => {
     if (!path) return "/placeholder-movie.svg";
@@ -23,24 +23,6 @@ function MovieCard({ movie, rating, status: initialStatus, onStatusChange }) {
     return colors[index % colors.length];
   };
 
-  // Format rating
-  const formatRating = (rating) => {
-    return rating ? parseFloat(rating).toFixed(1) : "N/A";
-  };
-
-    const [status, setStatus] = useState(initialStatus || "Not watched");
-
-    const handleStatusChange = async (newStatus) => {
-        setStatus(newStatus);
-        if (onStatusChange) {
-            onStatusChange(movie.id, newStatus)
-        }
-    }
-
-    const formatStatus =(status) => {
-    return status || "N/A";
-    }
-
   return (
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-300 overflow-hidden group cursor-pointer">
         {/* Movie Poster */}
@@ -56,12 +38,6 @@ function MovieCard({ movie, rating, status: initialStatus, onStatusChange }) {
           />
         </Link>
 
-          {/* Rating Badge */}
-          {movie.external_avg_rating && (
-            <div className="absolute top-2 right-2 bg-black bg-opacity-75 text-white px-2 py-1 rounded text-sm font-semibold">
-              ⭐ {formatRating(movie.external_avg_rating)}
-            </div>
-          )}
         </div>
 
         {/* Movie Info */}
@@ -92,36 +68,6 @@ function MovieCard({ movie, rating, status: initialStatus, onStatusChange }) {
               )}
             </div>
           )}
-
-          {/* Additional Info */}
-          <div className="flex justify-between items-center text-sm text-gray-600">
-            <span className="font-medium">Rating</span>
-            <span>{formatRating(movie.external_avg_rating)}</span>
-          </div>
-
-        {/* Your rating */}
-        {rating && (
-            <div className="flex justify-between items-center text-sm text-gray-600">
-                <span className="font-medium">Your Rating</span>
-                <span>{formatRating(rating)}</span>
-            </div>
-        )}
-
-        {/* Status */}
-        {status && (
-            <div className="flex justify-between items-center text-sm text-gray-600">
-                <span className="font-medium">Status: </span>
-                <select
-                    value={status}
-                    onChange={handleStatusChange}
-                    className="rounded px-2 py-1 text-xs"
-                    >
-                    <option value="Not watched">🔵 Not watched</option>
-                    <option value="Watching">🟡 Watching</option>
-                    <option value="Watched">🟢 Watched</option>
-                </select>
-            </div>
-        )}
 
           {movie.release_date && (
             <div className="flex justify-between items-center text-sm text-gray-600 mt-1">

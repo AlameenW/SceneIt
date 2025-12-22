@@ -180,7 +180,7 @@ function UserPage () {
                         reviews.map((review) => (
                         <li key={review.id} className="w-80">
                             {review.movie ? (
-                                <MovieCard movie={review.movie} rating={review.rating} />
+                                <MovieCard movie={review.movie}/>
                             ) : (
                                 <p>Loading movie...</p>
                             )}
@@ -202,7 +202,7 @@ function UserPage () {
                         .map((item) => (
                             <li key={item.id} className="w-80">
                             {item.movie ? (
-                                <MovieCard movie={item.movie} status={item.status} />
+                                <MovieCard movie={item.movie} />
                             ) : (
                                 <p>Loading movie...</p>
                             )}
@@ -224,7 +224,7 @@ function UserPage () {
                         .map((item) => (
                             <li key={item.id} className="w-80">
                             {item.movie ? (
-                                <MovieCard movie={item.movie} status={item.status} />
+                                <MovieCard movie={item.movie}/>
                             ) : (
                                 <p>Loading movie...</p>
                             )}

@@ -2,14 +2,16 @@ import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import LoadingSpinner from "../components/LoadingSpinner";
 
-function MovieDetailPage( {user} ) {
+function MovieDetailPage({ user }) {
   const { id } = useParams();
   const username = user?.username;
   const [movie, setMovie] = useState(null);
-  const [rating, setRating] = useState('');
+  const [rating, setRating] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
+  const [submitStatus, setSubmitStatus] = useState(null);
+  const [submitMessage, setSubmitMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   // Build TMDB image URL
   const buildImageURL = (path, size = "w500") => {
     if (!path) return "/placeholder-movie.svg";
@@ -46,45 +48,71 @@ function MovieDetailPage( {user} ) {
     return colors[index % colors.length];
   };
 
-    // Handle user submit rating
-    const handleSubmitRating = async () => {
-        if (!rating) {
-            console.log("No rating selected")
-            return;
-        }
-        try {
-            const response = await fetch(
-                `http://localhost:3001/api/${username}/review/${movie.id}`,
-                {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    credentials: 'include',
-                    body: JSON.stringify({ rating, review_text: ""}),
-                }
-            );
-            const data = await response.json();
-        } catch (error) {
-            console.error(error);
-        }
-    };
+  // Handle user submit rating
+  const handleSubmitRating = async () => {
+    if (!rating) {
+      setSubmitStatus("error");
+      setSubmitMessage("Please enter a rating");
+      return;
+    }
+    if (!user) {
+      setSubmitStatus("error");
+      setSubmitMessage("Please log in to rate movies");
+      return;
+    }
 
-    // Handle user add movie to watchlist
-    const handleAddWatchlist = async () => {
-        try {
-            const response = await fetch(
-                `http://localhost:3001/api/${username}/watchlist/${movie.id}`,
-                {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    credentials: 'include',
-                    body: JSON.stringify({ status:"Not watched", watchlist_priority: 1}),
-                }
-            );
-            const data = await response.json();
-        } catch (error){
-            console.error(error);
+    setIsSubmitting(true);
+    setSubmitStatus(null);
+    try {
+      const response = await fetch(
+        `http://localhost:3001/api/${username}/review/${movie.id}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ rating: parseFloat(rating), review_text: "" }),
         }
-    };
+      );
+      const data = await response.json();
+      if (data.success) {
+        setSubmitStatus("success");
+        setSubmitMessage("Rating submitted successfully");
+        setRating("");
+        setTimeout(() => setSubmitStatus(null), 3000);
+      } else {
+        setSubmitStatus("error");
+        setSubmitMessage(data.error);
+      }
+    } catch (error) {
+      console.error(error);
+      setSubmitStatus('error')
+      setSubmitMessage('Failed to submit rating, Please try again');
+    }
+    finally{
+      setIsSubmitting(false);
+    }
+  };
+
+  // Handle user add movie to watchlist
+  const handleAddWatchlist = async () => {
+    try {
+      const response = await fetch(
+        `http://localhost:3001/api/${username}/watchlist/${movie.id}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            status: "Not watched",
+            watchlist_priority: 1,
+          }),
+        }
+      );
+      const data = await response.json();
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   // Fetch movie details
   useEffect(() => {
@@ -209,10 +237,10 @@ function MovieDetailPage( {user} ) {
                   {/* Rating */}
                   <div className="flex items-center">
                     <span className="text-yellow-500 mr-1">★</span>
+                    <span className="text-gray-600 mr-2">External Rating:</span>
                     <span className="font-semibold text-gray-900">
                       {formatRating(movie.external_avg_rating)}
                     </span>
-                    <span className="text-gray-600 ml-1">User Score: 80%</span>
                   </div>
 
                   {/* Release Date */}
@@ -245,9 +273,11 @@ function MovieDetailPage( {user} ) {
                 )}
 
                 {/* Add to Watchlist Button */}
-                <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors mb-6"
-                        onClick={handleAddWatchlist}>
-                  Add to Watchlist
+                <button
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors mb-6"
+                  onClick={handleAddWatchlist}
+                >
+                  Add to Shelve
                 </button>
               </div>
 
@@ -264,93 +294,42 @@ function MovieDetailPage( {user} ) {
           </div>
         </div>
 
-        {/* Additional Information Cards */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8">
-          {/* Movie Stats */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              Movie Details
-            </h3>
-            <div className="space-y-3">
-              <div>
-                <span className="block text-sm font-medium text-gray-600">
-                  Release Date
-                </span>
-                <span className="text-gray-900">
-                  {formatDate(movie.release_date)}
-                </span>
-              </div>
-              <div>
-                <span className="block text-sm font-medium text-gray-600">
-                  Rating
-                </span>
-                <span className="text-gray-900">
-                  {formatRating(movie.external_avg_rating)}/10
-                </span>
-              </div>
-              <div>
-                <span className="block text-sm font-medium text-gray-600">
-                  Movie ID
-                </span>
-                <span className="text-gray-900">#{movie.id}</span>
-              </div>
-            </div>
-          </div>
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mt-8">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+            Your Rating:
+          </h3>
 
-          {/* Community Rating */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              Community Rating
-            </h3>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-gray-900 mb-2">
-                {formatRating(movie.external_avg_rating)}
-              </div>
-              <div className="flex justify-center mb-2">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <span
-                    key={star}
-                    className={`text-xl ${
-                      star <=
-                      Math.round(parseFloat(movie.external_avg_rating || 0) / 2)
-                        ? "text-yellow-400"
-                        : "text-gray-300"
-                    }`}
-                  >
-                    ★
-                  </span>
-                ))}
-              </div>
-              <p className="text-sm text-gray-600">
-                Based on community reviews
-              </p>
+          {/* Status message */}
+          {submitStatus && (
+            <div
+              className={`mb-4 p-3 rounded-lg ${
+                submitStatus === "success"
+                  ? "bg-green-100 text-green-700 border border-green-300"
+                  : "bg-red-100 text-red-700 border border-red-300"
+              }`}
+            >
+              {submitMessage}
             </div>
-          </div>
+          )}
 
-          {/* Your Review Placeholder */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              Your Review
-            </h3>
-            <div className="text-center text-gray-500">
-                <input
-                    type="number"
-                    min="0"
-                    max="10"
-                    value={rating}
-                    onChange={(e) => setRating(e.target.value)}
-                    placeholder="0"
-                    className="border border-gray-300 rounded px-2 py-1 w-16 mr-2"
-                    style={{appearance:'none',
-                        MozAppearance: 'textfield'
-                    }}
-                    />        
-                <span>/10</span>     
-                <button className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium transition-colors"
-                        onClick={handleSubmitRating}>
-                    Rate This Movie
-                </button>
-            </div>
+          <div className="flex items-center justify-center gap-4">
+            <input
+              type="number"
+              min="0"
+              max="10"
+              value={rating}
+              onChange={(e) => setRating(e.target.value)}
+              placeholder="0"
+              className="border border-gray-300 rounded px-3 py-2 w-20"
+              style={{ appearance: "none", MozAppearance: "textfield" }}
+            />
+            <span>/10</span>
+            <button
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors"
+              onClick={handleSubmitRating}
+            >
+              Rate This Movie
+            </button>
           </div>
         </div>
       </div>

@@ -80,7 +80,6 @@ app.listen(PORT, () => {
     console.log(`   GET /api/movies - Get movies (with pagination & filtering)`);
     console.log(`   GET /api/movies/:id - Get specific movie`);
     console.log(`   GET /api/genres/:id/movies - Get movies by genre`);
-    console.log(`   GET /api/stats - Database statistics`);
     console.log(`   GET /api/users - All users information`)
     console.log(`   GET /api/user - Get specific user information`)
 });

@@ -17,6 +17,7 @@ import {
   seedDatabaseController
 } from "./controllers/adminController.js";
 import UserController from "./controllers/userController.js";
+import { getMovieReviews } from "./controllers/reviewController.js";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -69,9 +70,14 @@ app.get("/api/genres/:genre_id/movies", getMoviesByGenre);
 // Movie routes
 app.get("/api/movies", getAllMovies);
 app.get("/api/movies/:id", getMovieById);
+app.get("/api/movies/:movieId/reviews", getMovieReviews);
 
 // User routes
 app.use("/api", userRouter);
+
+
+
+
 
 app.listen(PORT, () => {
     console.log(`🚀 Server listening on http://localhost:${PORT}`);

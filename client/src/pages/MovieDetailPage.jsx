@@ -12,6 +12,10 @@ function MovieDetailPage({ user }) {
   const [submitStatus, setSubmitStatus] = useState(null);
   const [submitMessage, setSubmitMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [reviews, setReviews] = useState([]);
+  const [movieReview, setMovieReview] = useState("");
+  const [reviewSubmitStatus, setReviewSubmitStatus] = useState(null);
+  const [reviewSubmitMessage, setReviewSubmitMessage] = useState("");
   // Build TMDB image URL
   const buildImageURL = (path, size = "w500") => {
     if (!path) return "/placeholder-movie.svg";
@@ -32,7 +36,6 @@ function MovieDetailPage({ user }) {
       day: "numeric",
     });
   };
-
   // Generate distinct colors for genre pills
   const getGenreColor = (genre, index) => {
     const colors = [
@@ -47,7 +50,6 @@ function MovieDetailPage({ user }) {
     ];
     return colors[index % colors.length];
   };
-
   // Handle user submit rating
   const handleSubmitRating = async () => {
     if (!rating) {
@@ -60,17 +62,36 @@ function MovieDetailPage({ user }) {
       setSubmitMessage("Please log in to rate movies");
       return;
     }
-
+    if(rating < 1 || rating > 10){
+      setSubmitStatus("error");
+      setSubmitMessage("Rating must be between 1 and 10")
+      return;
+    }
     setIsSubmitting(true);
     setSubmitStatus(null);
     try {
+      const existingResponse = await fetch(
+        `http://localhost:3001/api/movies/${id}/reviews`
+      );
+      const existingData = await existingResponse.json();
+      if(!existingData.success){
+        console.log('Failed to fetch exiting reviews');
+      }
+      const existingReviews = existingData.data;
+      console.log(existingReviews);
+      const existingReview = existingReviews.find(
+        (review) => review.username === username
+      );
+      const review_text = existingReview?.review_text;
+      console.log(review_text);
+
       const response = await fetch(
         `http://localhost:3001/api/${username}/review/${movie.id}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
-          body: JSON.stringify({ rating: parseFloat(rating), review_text: "" }),
+          body: JSON.stringify({ rating: parseFloat(rating), review_text: review_text }),
         }
       );
       const data = await response.json();
@@ -85,10 +106,9 @@ function MovieDetailPage({ user }) {
       }
     } catch (error) {
       console.error(error);
-      setSubmitStatus('error')
-      setSubmitMessage('Failed to submit rating, Please try again');
-    }
-    finally{
+      setSubmitStatus("error");
+      setSubmitMessage("Failed to submit rating, Please try again");
+    } finally {
       setIsSubmitting(false);
     }
   };
@@ -114,6 +134,84 @@ function MovieDetailPage({ user }) {
     }
   };
 
+  // Fetch movie reviews
+  const fetchReviews = async () => {
+    try {
+      const response = await fetch(
+        `http://localhost:3001/api/movies/${id}/reviews`
+      );
+      const data = await response.json();
+      if (data.success) {
+        setReviews(data.data);
+      }
+    } catch (error) {
+      console.log(`Error fetching reviews: ${error}`);
+    }
+  };
+  useEffect(() => {
+    fetchReviews();
+  }, [id]);
+
+  // Handle submit user review
+  const handleSubmitReview = async () => {
+    setReviewSubmitStatus(null);
+    setReviewSubmitMessage("");
+
+    if (movieReview.length === 0) {
+      setReviewSubmitMessage("Please add a review first");
+      setReviewSubmitStatus("error");
+      return;
+    }
+    if (!user) {
+      setReviewSubmitMessage("Please log in first.");
+      setReviewSubmitStatus("error");
+      return;
+    }
+    try {
+      // Get existing review data
+      const existingResponse = await fetch(
+        `http://localhost:3001/api/movies/${id}/reviews`
+      );
+      const existingData = await existingResponse.json();
+      // Find existing review for this movie
+      console.log(existingData);
+      const existingReview = existingData?.data?.find(
+        (review) => review.username == username
+      );
+      const existingRating = existingReview?.rating || null;
+
+      // Submit with preserved data.
+      const response = await fetch(
+        `http://localhost:3001/api/${username}/review/${id}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            rating: existingRating,
+            review_text: movieReview,
+          }),
+        }
+      );
+
+      const data = await response.json();
+      if (data.success) {
+        setMovieReview("");
+        setReviewSubmitStatus("success");
+        setReviewSubmitMessage("Review submitted successfully");
+        fetchReviews();
+
+        setTimeout(() => {
+          setReviewSubmitStatus(null);
+          setReviewSubmitMessage("");
+        }, 3000);
+      }
+    } catch (error) {
+      console.log(`Error posting review, ${error}`);
+      setReviewSubmitStatus("error");
+      setReviewSubmitMessage("Failed to submit review. Please try again.");
+    }
+  };
   // Fetch movie details
   useEffect(() => {
     const fetchMovie = async () => {
@@ -293,7 +391,7 @@ function MovieDetailPage({ user }) {
             </div>
           </div>
         </div>
-
+        {/* Rating */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mt-8">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">
             Your Rating:
@@ -329,6 +427,68 @@ function MovieDetailPage({ user }) {
               onClick={handleSubmitRating}
             >
               Rate This Movie
+            </button>
+          </div>
+        </div>
+
+        {/* Reviews Section */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mt-8">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Reviews:</h3>
+
+          <div className="space-y-4">
+            {reviews.length === 0 ? (
+              <div className="text-gray-500">No reviews yet</div>
+            ) : (
+              reviews.map((review, index) => (
+                <div
+                  key={index}
+                  className="mb-4 p-4 bg-white border border-gray-100 rounded-lg hover:border-gray-200 transition-colors"
+                >
+                  <span className="font-medium text-gray-900 mb-2 mr-3">
+                    {review.username}:
+                  </span>
+                  <span className="text-gray-700 leading-relaxed">
+                    {review.review_text}
+                  </span>
+                </div>
+              ))
+            )}
+          </div>
+
+          <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+            <label
+              htmlFor="review_text"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
+              Your review:
+            </label>
+
+            {/* Status message */}
+            {reviewSubmitStatus && (
+              <div
+                className={`mb-4 p-3 rounded-lg ${
+                  reviewSubmitStatus === "success"
+                    ? "bg-green-100 text-green-700 border border-green-300"
+                    : "bg-red-100 text-red-700 border border-red-300"
+                }`}
+              >
+                {reviewSubmitMessage}
+              </div>
+            )}
+
+            <textarea
+              id="review_text"
+              value={movieReview}
+              onChange={(e) => setMovieReview(e.target.value)}
+              placeholder="Share your thoughts about this movie..."
+              className="w-full p-3 border border-gray-300 rounded-lg resize-none"
+              rows="3"
+            />
+            <button
+              onClick={handleSubmitReview}
+              className="mt-3 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+            >
+              Submit Review
             </button>
           </div>
         </div>

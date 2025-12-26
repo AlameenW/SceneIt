@@ -53,7 +53,7 @@ const UserController = {
         try{
             const username = req.params.username;
             const movie_id = parseInt(req.params.movie_id);
-            const {rating, review_text}   = req.body;
+            const {rating, review_text} = req.body;
 
             // Check if user exists.
             const userResult = await pool.query(
